@@ -24,9 +24,18 @@ if did not work try
 
 
 To add a new root-finding method:
+
 Create a new Python file inside methods
+
 Implement the method following the existing pattern
+
 Import it in main.py
+
 Add UI options for it in main.py
+
 Functions should be written in Python math syntax, e.g., x**3 - x - 2
+
 The app will display the math function in readable format automatically
+
+pip freeze > requirements.txt
+for required files
