@@ -167,13 +167,6 @@ def is_effectively_real(r):
 def root_select(f, f_prime, function):
     print("\n--- Root Selection Started ---", flush= True)
 
-    # skip interpolation if exponenetial is detected
-    if contains_exponential(function):
-        print("Exponential detected.")
-        ai= AI(f, function)
-        ai_guess= float(ai)
-        return ai_guess
-    
     roots= lagrange_interpolate(f)
     print(f"Lagrange roots: {roots}")
     ai= AI(f, function)
