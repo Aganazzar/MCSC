@@ -193,15 +193,24 @@ def root_select(f, f_prime, function):
             if is_effectively_real(r):
                 slope = abs(f_prime.subs(x, r).evalf())
                 print(f"[FILTER] Interpolated root: {r}, slope: {slope}", flush=True)
-                if slope > 1e-8:
+                if slope > 1:
                     safe_roots.append((float(sp.re(r)), slope))
                 else:
                     low_slope_roots.append((float(sp.re(r)), slope))
                     print(f"[FILTER] Root {r} discarded due to low slope.", flush=True)
+                    # Log best Lagrange root with steepest slope (before AI inclusion)
+                if safe_roots:
+                    acceptable_lagrange_roots = [r for r in safe_roots if 1 <= r[1] <= 1e6]
+
+                    if acceptable_lagrange_roots:
+                        best_lagrange_root = max(acceptable_lagrange_roots, key=lambda tup: tup[1])
+                        print(f"[LAGRANGE SELECT] Best Lagrange root so far: {best_lagrange_root[0]} with slope: {best_lagrange_root[1]}")
+                else:
+                    print("[LAGRANGE SELECT] No valid Lagrange roots found.")
+
         except Exception as e:
             print(f"[ERROR] Exception while processing root {r}: {e}", flush=True)
 
-    # append AI guess too:
     print(f"[FILTER] AI guess value: {ai_guess}", flush=True)
 
     try:
@@ -210,27 +219,19 @@ def root_select(f, f_prime, function):
     except Exception as e:
         print(f"[FILTER] Exception computing AI slope: {e}", flush=True)
 
-    if ai_slope> 1e-8:
-        safe_roots.append((float(ai_guess), ai_slope))
-        print(f"[FILTER] AI guess appended.")
-
-    else: 
-        low_slope_roots.append((float(ai_guess), ai_slope))
-        print(f"[FILTER] AI guess discarded due to low slope.")
-
     if safe_roots:
         # Use steepest root among candidates
-        best_root= max(safe_roots, key=lambda tup: tup[1])[0]
+        #best_root= max(safe_roots, key=lambda tup: tup[1])[0]
+        # Filter for acceptable slope range
+        acceptable_roots = [r for r in safe_roots if 1 <= r[1] <= 1e6]
+
+        if acceptable_roots:
+            best_root = max(acceptable_roots, key=lambda tup: tup[1])[0]
+        else:
+            best_root = 0.0  # fallback if no acceptable root
+
         print(f"[SELECT] Best root chosen (steepest): {best_root}")
         return float(best_root)
-    
-
-    # Otherwise fallback to the root with the highest slope among low slopes
-    if low_slope_roots:
-        fallback_root = max(low_slope_roots, key=lambda tup: tup[1])[0]
-        print(f"[FALLBACK] No steep slope root found. Using best low slope root: {fallback_root}", flush=True)
-        return float(fallback_root)
-
     
     # if nothing works,
     print("[FALLBACK] No good interpolation root. Using AI fallback.")
@@ -260,7 +261,7 @@ def iterate(f, f_prime ,x0, tol, max_iter):
         fpx= f_prime(xn)
         if abs(fpx)< 1e-12:
             print(f"Derivative value is zero")
-            raise ValueError("Error")
+            raise ValueError("No real root found for funcion")
         
         x_next= xn-fx/fpx
         fx_next= abs(f(x_next))
@@ -276,13 +277,14 @@ def iterate(f, f_prime ,x0, tol, max_iter):
             raise ValueError("Fucntion diverging after {n} iterations.")
 
         if abs(x_next-xn)<tol and abs(f(x_next))< tol:
+            print(f"Root Found:{x_next}")
             return x_next, n
         
         prev_fx= fx_next
         xn= x_next 
 
     # maximum iterations exceeded1
-    raise ValueError("No real root found within the interval.")
+    raise ValueError("No real root found for funcion")
 
 # bracketing algo:
 def bracket(f, f_prime ,x0, x1, tol, max_iter):
