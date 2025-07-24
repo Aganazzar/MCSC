@@ -205,7 +205,7 @@ def root_select(f, f_prime, function):
             print(f"[ERROR] Exception while processing root {r}: {e}", flush=True)
 
     print(f"[FILTER] AI guess value: {ai_guess}", flush=True)
-
+    ai_slope = None
     try:
         ai_slope = abs(f_prime.subs(x, ai_guess).evalf())
         print(f"[FILTER] AI guess slope: {ai_slope}", flush=True)
@@ -220,15 +220,17 @@ def root_select(f, f_prime, function):
 
         if acceptable_roots:
             best_root = max(acceptable_roots, key=lambda tup: tup[1])[0]
-        else:
-            best_root = 0.0  # fallback if no acceptable root
-
-        print(f"[SELECT] Best root chosen (steepest): {best_root}")
-        return float(best_root)
+        
+            print(f"[SELECT] Best root chosen (steepest): {best_root}")
+            return float(best_root)
     
-    # if nothing works,
-    print("[FALLBACK] No good interpolation root. Using AI fallback.")
-    return float(ai_guess)
+    print("[FALLBACK] No good interpolation root. Checking AI slope...", flush=True)
+    if ai_slope is not None and 1 <= ai_slope <= 1e6:
+        print(f"[FALLBACK] AI guess slope acceptable. Using AI guess: {ai_guess}", flush=True)
+        return float(ai_guess)
+    else:
+        print(f"[FALLBACK] AI slope not acceptable. Using fallback 0.0", flush=True)
+        return 0.0
 
 # iterative method(newton-raphson)
 def iterate(f, f_prime ,x0, tol, max_iter):
